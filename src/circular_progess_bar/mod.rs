@@ -5,7 +5,7 @@ use gtk::glib;
 
 glib::wrapper! {
     pub struct CircularProgressBar(ObjectSubclass<imp::CircularProgressBar>)
-        @extends gtk::Widget, gtk::ListBoxRow,
+        @extends gtk::Widget,
         @implements gtk::Accessible, gtk::Actionable, gtk::Buildable, gtk::ConstraintTarget;
 }
 

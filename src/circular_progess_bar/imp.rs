@@ -1,10 +1,11 @@
-use std::{cell::RefCell, rc::Rc, sync::OnceLock};
-
-use adw::{prelude::*, subclass::prelude::*, *};
-use glib::{clone, subclass::Signal, Properties};
-use gtk::{glib, Orientation::Horizontal};
+use std::cell::RefCell;
+use gtk::glib as glib;
 use gtk::cairo as cairo;
 use gtk::pango as pango;
+use gtk::gdk as gdk;
+use gtk::subclass::prelude::*;
+use gtk::prelude::*;
+use glib::Properties;
 
 // ANCHOR: custom_button
 // Object holding the state
@@ -29,11 +30,12 @@ pub struct CircularProgressBar {
 impl ObjectSubclass for CircularProgressBar {
     const NAME: &'static str = "CircularProgressBar";
     type Type = super::CircularProgressBar;
-    type ParentType = gtk::ListBoxRow;
+    type ParentType = gtk::Widget;
 
     fn class_init(gtk_class: &mut Self::Class) {
-        // The layout manager determines how child widgets are laid out.
         gtk_class.set_layout_manager_type::<gtk::BinLayout>();
+        gtk_class.set_css_name("progess-bar");
+        gtk_class.set_accessible_role(gtk::AccessibleRole::ProgressBar);
     }
 }
 
@@ -52,16 +54,15 @@ impl ObjectImpl for CircularProgressBar {
         // `SYNC_CREATE` ensures that the label will be immediately set
         let obj = self.obj();
 
-        println!("ex: {}", obj.fraction());
         let obj_clone0 = obj.clone();
 
-        let draw_func = move |da: &gtk::DrawingArea, cr: &gtk::cairo::Context, width: i32, height: i32| {
+        let draw_func = move |_da: &gtk::DrawingArea, cr: &gtk::cairo::Context, width: i32, height: i32| {
             let layout = pangocairo::functions::create_layout(cr);
             //
-            let percentage = 0.38; //obj_clone0.percentage();
-            let mut line_width = 20.0; //obj_clone0.line_width();
-            let fill_center = false; //obj_clone0.fill_center();
-            let fill_radius = true; //obj_clone0.fill_radius();
+            let percentage = obj_clone0.fraction();
+            let mut line_width = obj_clone0.line_width();
+            let fill_center = obj_clone0.fill_center();
+            let fill_radius = obj_clone0.fill_radius();
             //
             let center_x = (width / 2) as f64;
             let center_y = (height / 2)  as f64;
@@ -147,10 +148,8 @@ impl ObjectImpl for CircularProgressBar {
             cr.restore().unwrap();
         };
         
-        //let child = gtk::DrawingArea::new();
-        let child = gtk::Label::new(Some("fuck"));
-        obj.add_css_class("no-hover");
-        //child.set_draw_func(draw_func);
+        let child = gtk::DrawingArea::new();
+        child.set_draw_func(draw_func);
         child.set_parent(&*obj);
         *self.child.borrow_mut() = Some(child.upcast::<gtk::Widget>());
     }
@@ -164,5 +163,3 @@ impl ObjectImpl for CircularProgressBar {
 }
 // Trait shared by all widgets
 impl WidgetImpl for CircularProgressBar {}
-
-impl ListBoxRowImpl for CircularProgressBar {}

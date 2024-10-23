@@ -32,6 +32,10 @@ fn main() {
 
 fn build_ui(app: &gtk::Application) {
     let widget = circular_progess_bar::CircularProgressBar::new();
+    widget.set_fraction(0.38);
+    widget.set_fill_center(false);
+    widget.set_fill_radius(false);
+    widget.set_line_width(10.0);
     let window = gtk::ApplicationWindow::builder()
         .title("Cosmo Test GTK4 RS")
         .application(app)
