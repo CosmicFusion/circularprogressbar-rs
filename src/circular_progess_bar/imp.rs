@@ -130,7 +130,6 @@ impl ObjectImpl for CircularProgressBar {
             // For now we get the text color from the defaut context.
             cr.set_source_color(&context.color());
         
-            
             // Percentage
             layout.set_text(&(percentage * 100.0).to_string());
             pangocairo::functions::update_layout(cr, &layout);
