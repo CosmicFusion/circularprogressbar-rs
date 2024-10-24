@@ -15,14 +15,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b048fb63fd8b5923fc5aa7b340d8e156aec7ec02f0c78fa8a6ddc2613f6f71de"
 
 [[package]]
-name = "cairo-exp"
-version = "0.1.0"
-dependencies = [
- "gtk4",
- "pangocairo",
-]
-
-[[package]]
 name = "cairo-rs"
 version = "0.20.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -53,6 +45,14 @@ checksum = "d0890061c4d3223e7267f3bad2ec40b997d64faac1c2815a4a9d95018e2b9e9c"
 dependencies = [
  "smallvec",
  "target-lexicon",
+]
+
+[[package]]
+name = "circularprogressbar-rs"
+version = "0.1.0"
+dependencies = [
+ "gtk4",
+ "pangocairo",
 ]
 
 [[package]]

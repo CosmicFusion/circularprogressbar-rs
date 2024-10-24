@@ -19,6 +19,14 @@ pub struct CircularProgressBar {
     #[property(get, set)]
     fill_radius: RefCell<bool>,
     #[property(get, set)]
+    center_fill_color: RefCell<Option<gdk::RGBA>>,
+    #[property(get, set)]
+    radius_fill_color: RefCell<Option<gdk::RGBA>>,
+    #[property(get, set)]
+    progress_fill_color: RefCell<Option<gdk::RGBA>>,
+    #[property(get, set)]
+    progress_font: RefCell<Option<String>>,
+    #[property(get, set)]
     fraction: RefCell<f64>,
     #[property(get, set)]
     line_width: RefCell<f64>,
@@ -59,10 +67,14 @@ impl ObjectImpl for CircularProgressBar {
         let draw_func = move |_da: &gtk::DrawingArea, cr: &gtk::cairo::Context, width: i32, height: i32| {
             let layout = pangocairo::functions::create_layout(cr);
             //
-            let percentage = obj_clone0.fraction();
+            let fraction = obj_clone0.fraction();
             let mut line_width = obj_clone0.line_width();
             let fill_center = obj_clone0.fill_center();
             let fill_radius = obj_clone0.fill_radius();
+            let center_fill_color = obj_clone0.center_fill_color().unwrap_or(gdk::RGBA::new(60.0, 255.0, 0.0, 1.0));
+            let radius_fill_color = obj_clone0.radius_fill_color().unwrap_or(gdk::RGBA::new(0.0, 213.0, 255.0, 1.0));
+            let progress_fill_color = obj_clone0.progress_fill_color().unwrap_or(gdk::RGBA::new(252.0, 244.0, 0.0, 1.0));
+            let progress_font = obj_clone0.progress_font().unwrap_or("URW Gothic".to_owned());
             //
             let center_x = (width / 2) as f64;
             let center_y = (height / 2)  as f64;
@@ -78,13 +90,11 @@ impl ObjectImpl for CircularProgressBar {
             };
         
             let line_cap = cairo::LineCap::Butt;
-            
-            //color = Gdk.RGBA ();
+
             cr.set_line_cap  (line_cap);
             cr.set_line_width (line_width);
 
             // Center Fill
-            let center_fill_color = gdk::RGBA::new(60.0, 255.0, 0.0, 1.0);
             if fill_center == true {
                 cr.arc(center_x, center_y, delta, 0.0, 2.0 * std::f64::consts::PI);
                 cr.set_source_color(&center_fill_color);
@@ -92,16 +102,14 @@ impl ObjectImpl for CircularProgressBar {
             }
         
             // Radius Fill
-            let radius_fill_color = gdk::RGBA::new(0.0, 213.0, 255.0, 1.0);
             if fill_radius == true {
                 cr.arc(center_x, center_y, delta, 0.0, 2.0 * std::f64::consts::PI);
                 cr.set_source_color(&radius_fill_color);
                 cr.stroke().unwrap();
             }
         
-            // Progress/Percentage Fill
-            let progress_fill_color = gdk::RGBA::new(252.0, 244.0, 0.0, 1.0);
-            if percentage > 0.0 {
+            // Progress/fraction Fill
+            if fraction > 0.0 {
                 cr.set_source_color(&progress_fill_color);
                 if line_width == 0.0 {
                     cr.move_to (center_x, center_y);
@@ -109,7 +117,7 @@ impl ObjectImpl for CircularProgressBar {
                             center_y,
                             delta+1.0,
                             1.5  * std::f64::consts::PI,
-                            (1.5 + percentage * 2.0 ) * std::f64::consts::PI
+                            (1.5 + fraction * 2.0 ) * std::f64::consts::PI
                         );
                     cr.fill().unwrap();
                 } else {
@@ -117,7 +125,7 @@ impl ObjectImpl for CircularProgressBar {
                             center_y,
                             delta,
                             1.5  * std::f64::consts::PI,
-                            (1.5 + percentage * 2.0 ) * std::f64::consts::PI
+                            (1.5 + fraction * 2.0 ) * std::f64::consts::PI
                         );
                     cr.stroke().unwrap();
                 }
@@ -125,20 +133,24 @@ impl ObjectImpl for CircularProgressBar {
         
             // Textual information
             let context = obj_clone0.style_context();
-            context.save ();
+            context.save();
             // FIXME: Gtk4 has changes in the styles that need to be reviewed
             // For now we get the text color from the defaut context.
             cr.set_source_color(&context.color());
         
-            // Percentage
-            layout.set_text(&(percentage * 100.0).to_string());
+            // fraction
+            layout.set_text(&((fraction * 100.0).round()).to_string());
+            let desc = pango::FontDescription::from_string(&(progress_font.clone() + " 24"));
+            layout.set_font_description(Some(&desc));
             pangocairo::functions::update_layout(cr, &layout);
             let (out_w, _out_h) = layout.size(); 
             cr.move_to (center_x - ((out_w / pango::SCALE) / 2) as f64, center_y - 27.0);
             pangocairo::functions::show_layout (cr, &layout);
         
-            // Units indicator (percentage)
+            // Units indicator (fraction)
             layout.set_text("PERCENT");
+            let desc = pango::FontDescription::from_string(&(progress_font + " 8"));
+            layout.set_font_description(Some(&desc));
             pangocairo::functions::update_layout(cr, &layout);
             let (out_w, _out_h) = layout.size(); 
             cr.move_to (center_x - ((out_w / pango::SCALE) / 2) as f64, center_y + 13.0);
