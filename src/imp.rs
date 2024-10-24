@@ -3,9 +3,8 @@ use gtk::glib as glib;
 use gtk::cairo as cairo;
 use gtk::pango as pango;
 use gtk::gdk as gdk;
-use gtk::subclass::prelude::*;
-use gtk::prelude::*;
-use glib::Properties;
+use gtk::{prelude::*, subclass::prelude::*, ffi::gtk_widget_queue_draw};
+use glib::{Properties, clone, translate::ToGlibPtr};
 
 // ANCHOR: custom_button
 // Object holding the state
@@ -49,6 +48,12 @@ impl ObjectSubclass for CircularProgressBar {
 
 fn calculate_radius(w: f64, h: f64) -> f64 {
     std::cmp::min(w.round() as i64 ,(h - 1.0).round() as i64) as f64
+}
+
+fn redraw_widget(widget: &gtk::Widget) {
+    unsafe {
+        gtk_widget_queue_draw(widget.to_glib_full());
+    }
 }
 
 // ANCHOR: object_impl
@@ -161,8 +166,75 @@ impl ObjectImpl for CircularProgressBar {
         
         let child = gtk::DrawingArea::new();
         child.set_draw_func(draw_func);
+        let child_widget = child.clone().upcast::<gtk::Widget>();
+        //
+        obj.connect_fill_center_notify(clone!(
+            #[strong] child_widget,
+            move |_|
+                {
+                    redraw_widget(&child_widget);
+                }
+            )
+        );
+        obj.connect_fill_radius_notify(clone!(
+            #[strong] child_widget,
+            move |_|
+                {
+                    redraw_widget(&child_widget);
+                }
+            )
+        );
+        obj.connect_center_fill_color_notify(clone!(
+            #[strong] child_widget,
+            move |_|
+                {
+                    redraw_widget(&child_widget);
+                }
+            )
+        );
+        obj.connect_radius_fill_color_notify(clone!(
+            #[strong] child_widget,
+            move |_|
+                {
+                    redraw_widget(&child_widget);
+                }
+            )
+        );
+        obj.connect_progress_fill_color_notify(clone!(
+            #[strong] child_widget,
+            move |_|
+                {
+                    redraw_widget(&child_widget);
+                }
+            )
+        );
+        obj.connect_progress_font_notify(clone!(
+            #[strong] child_widget,
+            move |_|
+                {
+                    redraw_widget(&child_widget);
+                }
+            )
+        );
+        obj.connect_fraction_notify(clone!(
+            #[strong] child_widget,
+            move |_|
+                {
+                    redraw_widget(&child_widget);
+                }
+            )
+        );
+        obj.connect_line_width_notify(clone!(
+            #[strong] child_widget,
+            move |_|
+                {
+                    redraw_widget(&child_widget);
+                }
+            )
+        );
+        //
         child.set_parent(&*obj);
-        *self.child.borrow_mut() = Some(child.upcast::<gtk::Widget>());
+        *self.child.borrow_mut() = Some(child_widget);
     }
 
     fn dispose(&self) {
