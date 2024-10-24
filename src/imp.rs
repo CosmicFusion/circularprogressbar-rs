@@ -26,6 +26,12 @@ pub struct CircularProgressBar {
     #[property(get, set)]
     progress_font: RefCell<Option<String>>,
     #[property(get, set)]
+    fraction_font_size: RefCell<i32>,
+    #[property(get, set)]
+    center_text_font_size: RefCell<i32>,
+    #[property(get, set)]
+    center_text: RefCell<Option<String>>,
+    #[property(get, set)]
     fraction: RefCell<f64>,
     #[property(get, set)]
     line_width: RefCell<f64>,
@@ -80,6 +86,9 @@ impl ObjectImpl for CircularProgressBar {
             let radius_fill_color = obj_clone0.radius_fill_color().unwrap_or(gdk::RGBA::new(0.0, 213.0, 255.0, 1.0));
             let progress_fill_color = obj_clone0.progress_fill_color().unwrap_or(gdk::RGBA::new(252.0, 244.0, 0.0, 1.0));
             let progress_font = obj_clone0.progress_font().unwrap_or("URW Gothic".to_owned());
+            let center_text_font_size = obj_clone0.center_text_font_size();
+            let fraction_font_size = obj_clone0.fraction_font_size();
+            let center_text = obj_clone0.center_text().unwrap_or("PERCENT".to_owned());
             //
             let center_x = (width / 2) as f64;
             let center_y = (height / 2)  as f64;
@@ -145,7 +154,7 @@ impl ObjectImpl for CircularProgressBar {
         
             // fraction
             layout.set_text(&((fraction * 100.0).round()).to_string());
-            let desc = pango::FontDescription::from_string(&(progress_font.clone() + " 24"));
+            let desc = pango::FontDescription::from_string(&(progress_font.clone() + " " + &fraction_font_size.to_string()));
             layout.set_font_description(Some(&desc));
             pangocairo::functions::update_layout(cr, &layout);
             let (out_w, _out_h) = layout.size(); 
@@ -153,8 +162,8 @@ impl ObjectImpl for CircularProgressBar {
             pangocairo::functions::show_layout (cr, &layout);
         
             // Units indicator (fraction)
-            layout.set_text("PERCENT");
-            let desc = pango::FontDescription::from_string(&(progress_font + " 8"));
+            layout.set_text(&center_text);
+            let desc = pango::FontDescription::from_string(&(progress_font + " " + &center_text_font_size.to_string()));
             layout.set_font_description(Some(&desc));
             pangocairo::functions::update_layout(cr, &layout);
             let (out_w, _out_h) = layout.size(); 
@@ -209,6 +218,30 @@ impl ObjectImpl for CircularProgressBar {
             )
         );
         obj.connect_progress_font_notify(clone!(
+            #[strong] child_widget,
+            move |_|
+                {
+                    redraw_widget(&child_widget);
+                }
+            )
+        );
+        obj.connect_fraction_font_size_notify(clone!(
+            #[strong] child_widget,
+            move |_|
+                {
+                    redraw_widget(&child_widget);
+                }
+            )
+        );
+        obj.connect_center_text_font_size_notify(clone!(
+            #[strong] child_widget,
+            move |_|
+                {
+                    redraw_widget(&child_widget);
+                }
+            )
+        );
+        obj.connect_center_text_notify(clone!(
             #[strong] child_widget,
             move |_|
                 {
